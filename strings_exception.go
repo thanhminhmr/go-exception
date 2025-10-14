@@ -5,6 +5,15 @@ import "fmt"
 // type check
 var _ Exception = stringsException{}
 
+// WithMessage returns an [Exception] that has only type and message, with no
+// causes, suppressed errors, recovered value, or stack trace.
+func WithMessage(eType, message string, parameters ...any) Exception {
+	if message == "" || len(parameters) == 0 {
+		return stringsException{eType, message}
+	}
+	return stringsException{eType, fmt.Sprintf(message, parameters...)}
+}
+
 type stringsException [2]string
 
 func (e stringsException) Error() string {
@@ -30,7 +39,7 @@ func (e stringsException) SetMessage(message string, parameters ...any) Exceptio
 	if message == "" {
 		return e
 	}
-	if len(parameters) <= 0 {
+	if len(parameters) == 0 {
 		e[1] = message
 	} else {
 		e[1] = fmt.Sprintf(message, parameters...)

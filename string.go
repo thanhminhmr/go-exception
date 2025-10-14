@@ -6,13 +6,13 @@ import "fmt"
 var _ Exception = String("")
 
 // String is a string-based [Exception]. It behaves like a simple error
-// containing only a message, with no causes, suppressed errors, recovered value,
-// or stack trace.
+// containing only a type, with no message, causes, suppressed errors, recovered
+// value, or stack trace.
 //
 // [String] is often used as a starting point for building a full exception with
 // additional context. When causes, suppressed errors, or stack traces are added,
-// a new [Exception] will be created that keeps the message and includes the
-// added details:
+// a new [Exception] will be created that keeps the type and includes the added
+// details:
 //
 //	err := exception.String("read failed").FillStackTrace(0)
 //
