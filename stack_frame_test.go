@@ -23,7 +23,7 @@ func TestStackTrace(t *testing.T) {
 			t.Fatalf("expected function, file, and line populated, got %#v", frame)
 		}
 	}
-	if !strings.HasSuffix(trace[0].Function, "/exception_test.TestStackTrace") {
+	if !strings.HasSuffix(trace[0].Function, "/go-exception_test.TestStackTrace") {
 		t.Fatalf("expected first function is this function, got %#v", trace[0])
 	}
 }

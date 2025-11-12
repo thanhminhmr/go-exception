@@ -30,7 +30,7 @@ func checkStackTrace(t *testing.T, trace exception.StackFrames, suffix string) {
 func TestPanicRecoverPair(t *testing.T) {
 	defer func() {
 		if recovered := exception.Recover(recover()); recovered != nil {
-			checkStackTrace(t, recovered.GetStackTrace(), "/exception_test.TestPanicRecoverPair")
+			checkStackTrace(t, recovered.GetStackTrace(), "/go-exception_test.TestPanicRecoverPair")
 		}
 	}()
 	exception.Panic("Test")
@@ -39,7 +39,7 @@ func TestPanicRecoverPair(t *testing.T) {
 func TestRecoverRawPanic(t *testing.T) {
 	defer func() {
 		if recovered := exception.Recover(recover()); recovered != nil {
-			checkStackTrace(t, recovered.GetStackTrace(), "/exception_test.TestRecoverRawPanic")
+			checkStackTrace(t, recovered.GetStackTrace(), "/go-exception_test.TestRecoverRawPanic")
 		}
 	}()
 	panic("Test")
