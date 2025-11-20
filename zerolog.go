@@ -14,7 +14,10 @@ import (
 
 // MarshalZerologObject marshall this [Exception] as a zerolog object.
 func (e String) MarshalZerologObject(event *zerolog.Event) {
-	event.Str("error", string(e))
+	event.Str("error", e.GetType())
+	if message := e.GetMessage(); message != "" {
+		event.Str("message", message)
+	}
 }
 
 func (e fullException) MarshalZerologObject(event *zerolog.Event) {
