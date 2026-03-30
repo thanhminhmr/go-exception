@@ -4,6 +4,21 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+// Package exception provides a lightweight exception model for Go.
+//
+// It supports attaching underlying causes, recording suppressed errors, storing
+// recovered panic values, and capturing stack traces.
+//
+// Integration with zerolog is optional. It can be disabled with the `no_zerolog`
+// build tag.
+//
+// Methods that return [Exception] may either modify the current exception in
+// place or return a new exception instance. Callers should always use the
+// returned value and must not assume that the original exception remains
+// unchanged.
+//
+// Source code in this package is licensed under the Mozilla Public License 2.0
+// (MPL-2.0).
 package exception
 
 // Exception defines a lightweight exception model for Go, providing mechanisms
@@ -78,6 +93,14 @@ type Exception interface {
 	// Note: This method may modify the current exception or return a new one. Always
 	// use the returned [Exception].
 	FillStackTrace(skip int) Exception
+
+	// Clone creates an independent copy of this [Exception] and returns it.
+	//
+	// After cloning, modifications to either [Exception] through its own methods do
+	// not affect the other.
+	//
+	// Note: Referenced values are not deeply cloned and may still be shared.
+	Clone() Exception
 
 	__() // private
 }

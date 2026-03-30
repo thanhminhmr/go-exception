@@ -169,6 +169,16 @@ func (e String) FillStackTrace(skip int) Exception {
 	}
 }
 
+// Clone returns an independent copy of this exception.
+//
+// After cloning, changes made through the methods of one [Exception] do not
+// affect the other.
+//
+// Referenced values are not deeply cloned and may still be shared.
+func (e String) Clone() Exception {
+	return e
+}
+
 func (e String) __() {}
 
 func (e String) Is(target error) bool {

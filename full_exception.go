@@ -6,7 +6,10 @@
 
 package exception
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // type check
 var _ Exception = fullException{}
@@ -82,6 +85,17 @@ func (e fullException) GetStackTrace() StackFrames {
 func (e fullException) FillStackTrace(skip int) Exception {
 	e.StackTrace = StackTrace(skip + 1)
 	return e
+}
+
+func (e fullException) Clone() Exception {
+	return fullException{
+		Type:       e.Type,
+		Message:    e.Message,
+		Cause:      slices.Clone(e.Cause),
+		Suppressed: slices.Clone(e.Suppressed),
+		Recovered:  e.Recovered,
+		StackTrace: slices.Clone(e.StackTrace),
+	}
 }
 
 func (e fullException) __() {}

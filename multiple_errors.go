@@ -6,7 +6,10 @@
 
 package exception
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // Join combines multiple errors into a single [Exception] with an empty type.
 //
@@ -108,6 +111,10 @@ func (e multipleErrors) FillStackTrace(skip int) Exception {
 		Cause:      e,
 		StackTrace: StackTrace(skip + 1),
 	}
+}
+
+func (e multipleErrors) Clone() Exception {
+	return slices.Clone(e)
 }
 
 func (e multipleErrors) __() {}
