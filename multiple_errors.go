@@ -36,11 +36,11 @@ var _ Exception = multipleErrors{}
 type multipleErrors []error
 
 func (e multipleErrors) Error() string {
-	return ""
+	return fmt.Sprintf("errors: %v", []error(e))
 }
 
 func (e multipleErrors) GetType() string {
-	return ""
+	return "errors"
 }
 
 func (e multipleErrors) GetMessage() string {
@@ -53,11 +53,13 @@ func (e multipleErrors) SetMessage(message string, parameters ...any) Exception 
 		return e
 	case len(parameters) == 0:
 		return fullException{
+			Type:    "errors",
 			Message: message,
 			Cause:   e,
 		}
 	default:
 		return fullException{
+			Type:    "errors",
 			Message: fmt.Sprintf(message, parameters...),
 			Cause:   e,
 		}
@@ -81,6 +83,7 @@ func (e multipleErrors) AddSuppressed(errors ...error) Exception {
 	var suppressed []error
 	if combine(&suppressed, errors...) {
 		return fullException{
+			Type:       "errors",
 			Cause:      e,
 			Suppressed: suppressed,
 		}
@@ -97,6 +100,7 @@ func (e multipleErrors) SetRecovered(recovered any) Exception {
 		return e
 	}
 	return fullException{
+		Type:      "errors",
 		Cause:     e,
 		Recovered: recovered,
 	}
@@ -108,8 +112,39 @@ func (e multipleErrors) GetStackTrace() StackFrames {
 
 func (e multipleErrors) FillStackTrace(skip int) Exception {
 	return fullException{
+		Type:       "errors",
 		Cause:      e,
 		StackTrace: StackTrace(skip + 1),
+	}
+}
+
+func (e multipleErrors) GetExtras() map[string]any {
+	return nil
+}
+
+func (e multipleErrors) SetExtras(extras map[string]any) Exception {
+	if extras == nil {
+		return e
+	}
+	return fullException{
+		Type:   "errors",
+		Cause:  e,
+		Extras: extras,
+	}
+}
+
+func (e multipleErrors) GetExtra(string) (any, bool) {
+	return nil, false
+}
+
+func (e multipleErrors) SetExtra(key string, value any) Exception {
+	if value == nil {
+		return e
+	}
+	return fullException{
+		Type:   "errors",
+		Cause:  e,
+		Extras: map[string]any{key: value},
 	}
 }
 

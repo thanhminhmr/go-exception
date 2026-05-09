@@ -72,9 +72,9 @@ func (e String) SetMessage(message string, parameters ...any) Exception {
 	case message == "":
 		return e
 	case len(parameters) == 0:
-		return String(e.GetType() + "\n" + message)
+		return String(e.GetType() + separator + message)
 	default:
-		return String(e.GetType() + "\n" + fmt.Sprintf(message, parameters...))
+		return String(e.GetType() + separator + fmt.Sprintf(message, parameters...))
 	}
 }
 
@@ -93,9 +93,10 @@ func (e String) GetCause() []error {
 func (e String) AddCause(errors ...error) Exception {
 	var cause []error
 	if combine(&cause, errors...) {
+		t, m, _ := strings.Cut(string(e), separator)
 		return fullException{
-			Type:    e.GetType(),
-			Message: e.GetMessage(),
+			Type:    t,
+			Message: m,
 			Cause:   cause,
 		}
 	}
@@ -116,9 +117,10 @@ func (e String) GetSuppressed() []error {
 func (e String) AddSuppressed(errors ...error) Exception {
 	var suppressed []error
 	if combine(&suppressed, errors...) {
+		t, m, _ := strings.Cut(string(e), separator)
 		return fullException{
-			Type:       e.GetType(),
-			Message:    e.GetMessage(),
+			Type:       t,
+			Message:    m,
 			Suppressed: suppressed,
 		}
 	}
@@ -139,9 +141,10 @@ func (e String) SetRecovered(recovered any) Exception {
 	if recovered == nil {
 		return e
 	}
+	t, m, _ := strings.Cut(string(e), separator)
 	return fullException{
-		Type:      e.GetType(),
-		Message:   e.GetMessage(),
+		Type:      t,
+		Message:   m,
 		Recovered: recovered,
 	}
 }
@@ -162,10 +165,78 @@ func (e String) GetStackTrace() StackFrames {
 // Note: This method may modify the current exception or return a new one. Always
 // use the returned [Exception].
 func (e String) FillStackTrace(skip int) Exception {
+	t, m, _ := strings.Cut(string(e), separator)
 	return fullException{
-		Type:       e.GetType(),
-		Message:    e.GetMessage(),
+		Type:       t,
+		Message:    m,
 		StackTrace: StackTrace(skip + 1),
+	}
+}
+
+// GetExtras returns the additional metadata associated with this exception as a
+// key-value map.
+//
+// Extras can be used to attach arbitrary contextual information such as request
+// identifiers, user information, diagnostic values, or application-specific
+// state.
+//
+// The returned map may be nil if no extras have been set.
+func (e String) GetExtras() map[string]any {
+	return nil
+}
+
+// SetExtras stores the additional metadata associated with this exception as a
+// key-value map.
+//
+// Extras can be used to attach arbitrary contextual information such as request
+// identifiers, user information, diagnostic values, or application-specific
+// state.
+//
+// Note: This method may modify the current exception or return a new one. Always
+// use the returned [Exception].
+func (e String) SetExtras(extras map[string]any) Exception {
+	if extras == nil {
+		return e
+	}
+	t, m, _ := strings.Cut(string(e), separator)
+	return fullException{
+		Type:    t,
+		Message: m,
+		Extras:  extras,
+	}
+}
+
+// GetExtra retrieves a single extra value associated with the given key.
+//
+// Extras can be used to attach arbitrary contextual information such as request
+// identifiers, user information, diagnostic values, or application-specific
+// state.
+//
+// The returned boolean reports whether the key exists.
+func (e String) GetExtra(string) (any, bool) {
+	return nil, false
+}
+
+// SetExtra stores an additional metadata value inside this exception under the
+// specified key.
+//
+// Extras can be used to attach arbitrary contextual information such as request
+// identifiers, user information, diagnostic values, or application-specific
+// state.
+//
+// If a value already exists for the key, it is replaced.
+//
+// Note: This method may modify the current exception or return a new one. Always
+// use the returned [Exception].
+func (e String) SetExtra(key string, value any) Exception {
+	if value == nil {
+		return e
+	}
+	t, m, _ := strings.Cut(string(e), separator)
+	return fullException{
+		Type:    t,
+		Message: m,
+		Extras:  map[string]any{key: value},
 	}
 }
 
