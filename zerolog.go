@@ -45,6 +45,9 @@ func (e fullException) MarshalZerologObject(event *zerolog.Event) {
 	if e.StackTrace != nil {
 		event.Any("stack_trace", e.StackTrace)
 	}
+	if e.Extras != nil {
+		event.Any("extras", e.Extras)
+	}
 }
 
 func (e multipleErrors) MarshalZerologObject(event *zerolog.Event) {

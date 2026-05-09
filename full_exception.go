@@ -8,6 +8,7 @@ package exception
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 )
 
@@ -21,6 +22,7 @@ type fullException struct {
 	Suppressed []error
 	Recovered  any
 	StackTrace []StackFrame
+	Extras     map[string]any
 }
 
 func (e fullException) Error() string {
@@ -87,6 +89,29 @@ func (e fullException) FillStackTrace(skip int) Exception {
 	return e
 }
 
+func (e fullException) GetExtras() map[string]any {
+	return e.Extras
+}
+
+func (e fullException) SetExtras(extras map[string]any) Exception {
+	e.Extras = extras
+	return e
+}
+
+func (e fullException) GetExtra(key string) (any, bool) {
+	extra, exists := e.Extras[key]
+	return extra, exists
+}
+
+func (e fullException) SetExtra(key string, value any) Exception {
+	if value != nil {
+		e.Extras[key] = value
+	} else {
+		delete(e.Extras, key)
+	}
+	return e
+}
+
 func (e fullException) Clone() Exception {
 	return fullException{
 		Type:       e.Type,
@@ -95,6 +120,7 @@ func (e fullException) Clone() Exception {
 		Suppressed: slices.Clone(e.Suppressed),
 		Recovered:  e.Recovered,
 		StackTrace: slices.Clone(e.StackTrace),
+		Extras:     maps.Clone(e.Extras),
 	}
 }
 

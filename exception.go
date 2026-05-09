@@ -94,6 +94,49 @@ type Exception interface {
 	// use the returned [Exception].
 	FillStackTrace(skip int) Exception
 
+	// GetExtras returns the additional metadata associated with this exception as a
+	// key-value map.
+	//
+	// Extras can be used to attach arbitrary contextual information such as request
+	// identifiers, user information, diagnostic values, or application-specific
+	// state.
+	//
+	// The returned map may be nil if no extras have been set.
+	GetExtras() map[string]any
+
+	// SetExtras stores the additional metadata associated with this exception as a
+	// key-value map.
+	//
+	// Extras can be used to attach arbitrary contextual information such as request
+	// identifiers, user information, diagnostic values, or application-specific
+	// state.
+	//
+	// Note: This method may modify the current exception or return a new one. Always
+	// use the returned [Exception].
+	SetExtras(extras map[string]any) Exception
+
+	// GetExtra retrieves a single extra value associated with the given key.
+	//
+	// Extras can be used to attach arbitrary contextual information such as request
+	// identifiers, user information, diagnostic values, or application-specific
+	// state.
+	//
+	// The returned boolean reports whether the key exists.
+	GetExtra(key string) (any, bool)
+
+	// SetExtra stores an additional metadata value inside this exception under the
+	// specified key.
+	//
+	// Extras can be used to attach arbitrary contextual information such as request
+	// identifiers, user information, diagnostic values, or application-specific
+	// state.
+	//
+	// If a value already exists for the key, it is replaced.
+	//
+	// Note: This method may modify the current exception or return a new one. Always
+	// use the returned [Exception].
+	SetExtra(key string, value any) Exception
+
 	// Clone creates an independent copy of this [Exception] and returns it.
 	//
 	// After cloning, modifications to either [Exception] through its own methods do
