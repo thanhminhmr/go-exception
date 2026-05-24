@@ -251,11 +251,3 @@ func (e String) Clone() Exception {
 }
 
 func (e String) __() {}
-
-func (e String) Is(target error) bool {
-	return is(e, target)
-}
-
-func (e String) As(target any) bool {
-	return as(e, target)
-}

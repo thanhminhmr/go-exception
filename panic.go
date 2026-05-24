@@ -14,7 +14,7 @@ const PanicError = String("panicked")
 // whose type is [PanicError].
 //
 // If the value already implements [Exception] and its type is [PanicError], it
-// is re-panicked directly. This allows Panic to be used in a chain of recover
+// is re-panicked directly. This allows [Panic] to be used in a chain of recover
 // handlers without changing the original panic state.
 //
 // Otherwise, [Panic] creates a new [Exception] that uses [PanicError] as its
@@ -23,18 +23,15 @@ const PanicError = String("panicked")
 //
 // Typical usage together with [Recover]:
 //
-//	defer func() {
-//	    if err := exception.Recover(recover()); err != nil {
-//	        // handle exception
-//	    }
-//	}()
-//
-//	...
+//	defer exception.Recover(func(recovered exception.Exception) {
+//	    // handle recovered exception
+//	})
 //
 //	if somethingWrong {
 //	    exception.Panic("bad state")
 //	}
 func Panic(recovered any) {
+	//goland:noinspection GoTypeAssertionOnErrors
 	if err, ok := recovered.(Exception); !ok || err.GetType() != string(PanicError) {
 		recovered = fullException{
 			Type:       string(PanicError),
@@ -45,32 +42,43 @@ func Panic(recovered any) {
 	panic(recovered)
 }
 
-// Recover normalizes a recovered panic value into an [Exception].
+// Recover recovers from a panic and passes the recovered value to callback as an
+// [Exception].
 //
-// If recovered is nil, [Recover] returns nil.
+// If no panic occurred, [Recover] does nothing.
 //
-// If the value already implements [Exception] and its type is [PanicError], it
-// is returned directly. This allows multiple recover handlers to work together:
-// the first one captures the stack trace, and later ones can observe or rethrow
-// the same [Exception] without modification.
+// If the recovered value already implements [Exception] and its type is
+// [PanicError], it is passed to callback directly. This allows multiple recover
+// handlers to work together: the first one captures the panic state, and later
+// ones can observe or rethrow the same [Exception] without modification.
 //
 // Otherwise, [Recover] creates a new [Exception] that uses [PanicError] as its
-// type, keeps the recovered value, and records the stack trace starting from the
-// location where the panic occurred.
+// type, keeps the recovered value, and records the stack trace starting from
+// the location where the panic occurred.
 //
-// Typical usage in a deferred function:
+// [Recover] is intended to be used with defer:
 //
-//	defer func() {
-//	    if err := exception.Recover(recover()); err != nil {
-//	        // handle exception
-//	    }
-//	}()
-func Recover(recovered any) Exception {
-	if recovered == nil {
-		return nil
+//	defer exception.Recover(func(ex exception.Exception) {
+//	    // handle recovered exception
+//	})
+//
+//	if somethingWrong {
+//	    exception.Panic("bad state")
+//	}
+func Recover(callback func(Exception)) {
+	if callback == nil {
+		panic("BUG: callback is nil")
 	}
-	if err, ok := recovered.(Exception); ok && err.GetType() == string(PanicError) {
-		return err
+	// try to recover
+	recovered := recover()
+	if recovered == nil {
+		return
+	}
+	// check if chained panic
+	//goland:noinspection GoTypeAssertionOnErrors
+	if ex, ok := recovered.(Exception); ok && ex.GetType() == string(PanicError) {
+		callback(ex)
+		return
 	}
 	// skip to panic frame if exists
 	trace := StackTrace(1)
@@ -80,9 +88,9 @@ func Recover(recovered any) Exception {
 			break
 		}
 	}
-	return fullException{
+	callback(fullException{
 		Type:       string(PanicError),
 		Recovered:  recovered,
 		StackTrace: trace,
-	}
+	})
 }

@@ -129,11 +129,3 @@ func (e fullException) __() {}
 func (e fullException) Unwrap() []error {
 	return e.Cause
 }
-
-func (e fullException) Is(target error) bool {
-	return is(e, target)
-}
-
-func (e fullException) As(target any) bool {
-	return as(e, target)
-}
