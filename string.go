@@ -91,7 +91,7 @@ func (e String) GetCause() []error {
 // Note: This method may modify the current exception or return a new one. Always
 // use the returned [Exception].
 func (e String) AddCause(errors ...error) Exception {
-	var cause []error
+	var cause multipleErrors
 	if combine(&cause, errors...) {
 		t, m, _ := strings.Cut(string(e), separator)
 		return fullException{
@@ -115,7 +115,7 @@ func (e String) GetSuppressed() []error {
 // Note: This method may modify the current exception or return a new one. Always
 // use the returned [Exception].
 func (e String) AddSuppressed(errors ...error) Exception {
-	var suppressed []error
+	var suppressed multipleErrors
 	if combine(&suppressed, errors...) {
 		t, m, _ := strings.Cut(string(e), separator)
 		return fullException{

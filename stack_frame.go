@@ -13,9 +13,9 @@ import (
 // StackFrame represents a single frame in a stack trace. It contains the
 // function name, source file, and line number for a point in the call stack.
 type StackFrame struct {
-	Function string
-	File     string
-	Line     int
+	Function string `json:"function,omitempty"`
+	File     string `json:"file,omitempty"`
+	Line     int    `json:"line,omitempty"`
 }
 
 // StackFrames is a slice of [StackFrame] values. It represents a complete stack

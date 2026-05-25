@@ -6,7 +6,7 @@
 
 package exception
 
-func combine(result *[]error, errors ...error) (changed bool) {
+func combine(result *multipleErrors, errors ...error) (changed bool) {
 	// assert result != nil
 	for _, err := range errors {
 		combineAdd(result, &changed, err)
@@ -14,7 +14,7 @@ func combine(result *[]error, errors ...error) (changed bool) {
 	return
 }
 
-func combineAdd(result *[]error, changed *bool, err error) {
+func combineAdd(result *multipleErrors, changed *bool, err error) {
 	if err == nil {
 		return
 	}
@@ -29,7 +29,7 @@ func combineAdd(result *[]error, changed *bool, err error) {
 	}
 }
 
-func concat(result *[]error, errors ...error) {
+func concat(result *multipleErrors, errors ...error) {
 	// assert result != nil
 	for _, err := range errors {
 		concatAdd(result, err)
@@ -37,7 +37,7 @@ func concat(result *[]error, errors ...error) {
 	return
 }
 
-func concatAdd(result *[]error, err error) {
+func concatAdd(result *multipleErrors, err error) {
 	if err == nil {
 		return
 	}

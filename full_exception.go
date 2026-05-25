@@ -16,13 +16,13 @@ import (
 var _ Exception = fullException{}
 
 type fullException struct {
-	Type       string
-	Message    string
-	Cause      []error
-	Suppressed []error
-	Recovered  any
-	StackTrace []StackFrame
-	Extras     map[string]any
+	Type       string         `json:"type,omitempty"`
+	Message    string         `json:"message,omitempty"`
+	Cause      multipleErrors `json:"cause,omitempty"`
+	Suppressed multipleErrors `json:"suppressed,omitempty"`
+	Recovered  any            `json:"recovered,omitempty"`
+	StackTrace StackFrames    `json:"stack_trace,omitempty"`
+	Extras     map[string]any `json:"extras,omitempty"`
 }
 
 func (e fullException) Error() string {

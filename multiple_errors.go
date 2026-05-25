@@ -23,11 +23,11 @@ import (
 // unboxed joins, as its causes. Other details such as the message, suppressed
 // errors, recovered value, and stack trace are left empty.
 func Join(errors ...error) Exception {
-	var multiple []error
+	var multiple multipleErrors
 	if !combine(&multiple, errors...) {
 		return nil
 	}
-	return multipleErrors(multiple)
+	return multiple
 }
 
 // type check
@@ -36,11 +36,11 @@ var _ Exception = multipleErrors{}
 type multipleErrors []error
 
 func (e multipleErrors) Error() string {
-	return fmt.Sprintf("errors: %v", []error(e))
+	return fmt.Sprintf("%v", []error(e))
 }
 
 func (e multipleErrors) GetType() string {
-	return "errors"
+	return ""
 }
 
 func (e multipleErrors) GetMessage() string {
@@ -53,13 +53,11 @@ func (e multipleErrors) SetMessage(message string, parameters ...any) Exception 
 		return e
 	case len(parameters) == 0:
 		return fullException{
-			Type:    "errors",
 			Message: message,
 			Cause:   e,
 		}
 	default:
 		return fullException{
-			Type:    "errors",
 			Message: fmt.Sprintf(message, parameters...),
 			Cause:   e,
 		}
@@ -71,7 +69,7 @@ func (e multipleErrors) GetCause() []error {
 }
 
 func (e multipleErrors) AddCause(errors ...error) Exception {
-	concat((*[]error)(&e), errors...)
+	concat(&e, errors...)
 	return e
 }
 
@@ -80,10 +78,9 @@ func (e multipleErrors) GetSuppressed() []error {
 }
 
 func (e multipleErrors) AddSuppressed(errors ...error) Exception {
-	var suppressed []error
+	var suppressed multipleErrors
 	if combine(&suppressed, errors...) {
 		return fullException{
-			Type:       "errors",
 			Cause:      e,
 			Suppressed: suppressed,
 		}
@@ -100,7 +97,6 @@ func (e multipleErrors) SetRecovered(recovered any) Exception {
 		return e
 	}
 	return fullException{
-		Type:      "errors",
 		Cause:     e,
 		Recovered: recovered,
 	}
@@ -112,7 +108,6 @@ func (e multipleErrors) GetStackTrace() StackFrames {
 
 func (e multipleErrors) FillStackTrace(skip int) Exception {
 	return fullException{
-		Type:       "errors",
 		Cause:      e,
 		StackTrace: StackTrace(skip + 1),
 	}
@@ -127,7 +122,6 @@ func (e multipleErrors) SetExtras(extras map[string]any) Exception {
 		return e
 	}
 	return fullException{
-		Type:   "errors",
 		Cause:  e,
 		Extras: extras,
 	}
@@ -142,7 +136,6 @@ func (e multipleErrors) SetExtra(key string, value any) Exception {
 		return e
 	}
 	return fullException{
-		Type:   "errors",
 		Cause:  e,
 		Extras: map[string]any{key: value},
 	}
