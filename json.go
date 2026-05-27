@@ -12,6 +12,8 @@ import (
 	"unsafe"
 )
 
+// MarshalJSON marshals this [Exception] as a JSON object, so that any logger
+// that support JSON object dump could work seamlessly.
 func (e String) MarshalJSON() ([]byte, error) {
 	m := map[string]any{}
 	if v := e.GetType(); v != "" {
@@ -41,6 +43,7 @@ func (e multipleErrors) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// MarshalJSON marshals this [StackFrames] as a JSON object.
 func (s StackFrames) MarshalJSON() ([]byte, error) {
 	switch len(s) {
 	case 0:

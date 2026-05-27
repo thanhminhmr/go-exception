@@ -7,10 +7,7 @@
 // Package exception provides a lightweight exception model for Go.
 //
 // It supports attaching underlying causes, recording suppressed errors, storing
-// recovered panic values, and capturing stack traces.
-//
-// Integration with zerolog is optional. It can be disabled with the `no_zerolog`
-// build tag.
+// recovered panic values, capturing stack traces, and attaching extras.
 //
 // Methods that return [Exception] may either modify the current exception in
 // place or return a new exception instance. Callers should always use the
@@ -22,8 +19,8 @@
 package exception
 
 // Exception defines a lightweight exception model for Go, providing mechanisms
-// for chaining causes, tracking suppressed errors, storing recovered values, and
-// capturing stack traces.
+// for chaining causes, tracking suppressed errors, storing recovered values,
+// capturing stack traces, and attaching extras.
 //
 // Methods that return [Exception] may either modify the current exception in
 // place or return a new exception instance. Callers should always use the
@@ -33,6 +30,10 @@ type Exception interface {
 	// Error returns a string representation of this exception in the form of "Type:
 	// Message"
 	Error() string
+
+	// MarshalJSON marshals this [Exception] as a JSON object, so that any logger
+	// that support JSON object dump could work seamlessly.
+	MarshalJSON() ([]byte, error)
 
 	// GetType returns the type of this exception.
 	GetType() string

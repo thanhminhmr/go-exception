@@ -24,10 +24,11 @@ import (
 // errors, recovered value, and stack trace are left empty.
 func Join(errors ...error) Exception {
 	var multiple multipleErrors
-	if !combine(&multiple, errors...) {
-		return nil
+	multiple.append(errors...)
+	if len(multiple) > 0 {
+		return multiple
 	}
-	return multiple
+	return nil
 }
 
 // type check
@@ -69,7 +70,7 @@ func (e multipleErrors) GetCause() []error {
 }
 
 func (e multipleErrors) AddCause(errors ...error) Exception {
-	concat(&e, errors...)
+	e.append(errors...)
 	return e
 }
 
@@ -79,7 +80,8 @@ func (e multipleErrors) GetSuppressed() []error {
 
 func (e multipleErrors) AddSuppressed(errors ...error) Exception {
 	var suppressed multipleErrors
-	if combine(&suppressed, errors...) {
+	suppressed.append(errors...)
+	if len(suppressed) > 0 {
 		return fullException{
 			Cause:      e,
 			Suppressed: suppressed,
@@ -149,4 +151,19 @@ func (e multipleErrors) __() {}
 
 func (e multipleErrors) Unwrap() []error {
 	return e
+}
+
+//goland:noinspection GoMixedReceiverTypes
+func (e *multipleErrors) append(errors ...error) {
+	for _, err := range errors {
+		if err == nil {
+			continue
+		}
+		//goland:noinspection GoTypeAssertionOnErrors
+		if multiple, ok := err.(multipleErrors); ok {
+			*e = append(*e, multiple...)
+		} else {
+			*e = append(*e, err)
+		}
+	}
 }

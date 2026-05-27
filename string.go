@@ -92,7 +92,8 @@ func (e String) GetCause() []error {
 // use the returned [Exception].
 func (e String) AddCause(errors ...error) Exception {
 	var cause multipleErrors
-	if combine(&cause, errors...) {
+	cause.append(errors...)
+	if len(cause) > 0 {
 		t, m, _ := strings.Cut(string(e), separator)
 		return fullException{
 			Type:    t,
@@ -116,7 +117,8 @@ func (e String) GetSuppressed() []error {
 // use the returned [Exception].
 func (e String) AddSuppressed(errors ...error) Exception {
 	var suppressed multipleErrors
-	if combine(&suppressed, errors...) {
+	suppressed.append(errors...)
+	if len(suppressed) > 0 {
 		t, m, _ := strings.Cut(string(e), separator)
 		return fullException{
 			Type:       t,

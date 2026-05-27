@@ -58,7 +58,7 @@ func (e fullException) GetCause() []error {
 }
 
 func (e fullException) AddCause(errors ...error) Exception {
-	concat(&e.Cause, errors...)
+	e.Cause.append(errors...)
 	return e
 }
 
@@ -67,7 +67,7 @@ func (e fullException) GetSuppressed() []error {
 }
 
 func (e fullException) AddSuppressed(errors ...error) Exception {
-	concat(&e.Suppressed, errors...)
+	e.Suppressed.append(errors...)
 	return e
 }
 
