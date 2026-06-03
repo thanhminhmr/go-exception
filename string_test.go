@@ -51,6 +51,19 @@ func TestStringNoType(t *testing.T) {
 	}
 }
 
+func TestStringNoMessageExtraSeparator(t *testing.T) {
+	const StringError = exception.String("Type: ")
+	if StringError.GetType() != "Type" {
+		t.Errorf("Expected to have type \"Test\" but got \"%s\"", StringError.GetType())
+	}
+	if StringError.GetMessage() != "" {
+		t.Errorf("Expected to have empty message but got \"%s\"", StringError.GetMessage())
+	}
+	if StringError.Error() != "Type" {
+		t.Errorf("Expected to have error string \"Type\" but got \"%s\"", StringError.Error())
+	}
+}
+
 func TestStringEmpty(t *testing.T) {
 	const StringError = exception.String("")
 	if StringError.GetType() != "" {
@@ -61,5 +74,18 @@ func TestStringEmpty(t *testing.T) {
 	}
 	if StringError.Error() != "" {
 		t.Errorf("Expected to have empty error string but got \"%s\"", StringError.Error())
+	}
+}
+
+func TestStringEmptyAfterSetMessage(t *testing.T) {
+	var err = exception.String("").SetMessage("%s", "")
+	if err.GetType() != "" {
+		t.Errorf("Expected to have empty type but got \"%s\"", err.GetType())
+	}
+	if err.GetMessage() != "" {
+		t.Errorf("Expected to have empty message but got \"%s\"", err.GetMessage())
+	}
+	if err.Error() != "" {
+		t.Errorf("Expected to have empty error string but got \"%s\"", err.Error())
 	}
 }

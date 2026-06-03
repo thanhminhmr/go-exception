@@ -49,19 +49,18 @@ func (e multipleErrors) GetMessage() string {
 }
 
 func (e multipleErrors) SetMessage(message string, parameters ...any) Exception {
-	switch {
-	case message == "":
+	if message == "" {
 		return e
-	case len(parameters) == 0:
-		return fullException{
-			Message: message,
-			Cause:   e,
-		}
-	default:
-		return fullException{
-			Message: fmt.Sprintf(message, parameters...),
-			Cause:   e,
-		}
+	}
+	if len(parameters) > 0 {
+		message = fmt.Sprintf(message, parameters...)
+	}
+	if message == "" {
+		return e
+	}
+	return fullException{
+		Message: message,
+		Cause:   e,
 	}
 }
 

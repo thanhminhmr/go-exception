@@ -7,6 +7,7 @@
 package exception
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"unsafe"
@@ -15,21 +16,20 @@ import (
 // MarshalJSON marshals this [Exception] as a JSON object, so that any logger
 // that support JSON object dump could work seamlessly.
 func (e String) MarshalJSON() ([]byte, error) {
-	m := map[string]any{}
-	if v := e.GetType(); v != "" {
-		m["type"] = v
-	}
-	if v := e.GetMessage(); v != "" {
-		m["message"] = v
-	}
-	return json.Marshal(m)
+	return json.Marshal(e.Error())
 }
 
+var fullExceptionStruct = reflect.StructOf(reflect.VisibleFields(reflect.TypeFor[fullException]()))
+
 func (e fullException) MarshalJSON() ([]byte, error) {
-	return json.Marshal(reflect.NewAt(
-		reflect.StructOf(reflect.VisibleFields(reflect.TypeFor[fullException]())),
-		unsafe.Pointer(&e),
-	).Interface())
+	data := reflect.NewAt(fullExceptionStruct, unsafe.Pointer(&e)).Interface()
+	buffer := bytes.Buffer{}
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(data); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }
 
 func (e multipleErrors) MarshalJSON() ([]byte, error) {

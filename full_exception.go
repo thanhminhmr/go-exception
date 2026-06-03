@@ -45,11 +45,10 @@ func (e fullException) GetMessage() string {
 }
 
 func (e fullException) SetMessage(message string, parameters ...any) Exception {
-	if message == "" || len(parameters) == 0 {
-		e.Message = message
-	} else {
-		e.Message = fmt.Sprintf(message, parameters...)
+	if message != "" && len(parameters) != 0 {
+		message = fmt.Sprintf(message, parameters...)
 	}
+	e.Message = message
 	return e
 }
 

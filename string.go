@@ -41,26 +41,30 @@ type String string
 // Message"
 func (e String) Error() string {
 	// removing the separator when either the type or the message is missing
-	if t, m, ok := strings.Cut(string(e), separator); ok {
-		if t == "" {
-			return m
-		} else if m == "" {
-			return t
-		}
+	switch strings.Index(string(e), separator) {
+	case 0:
+		return string(e)[len(separator):]
+	case len(e) - len(separator):
+		return string(e[:len(e)-len(separator)])
+	default:
+		return string(e)
 	}
-	return string(e)
 }
 
 // GetType returns the type of this exception.
 func (e String) GetType() string {
-	t, _, _ := strings.Cut(string(e), separator)
-	return t
+	if i := strings.Index(string(e), separator); i >= 0 {
+		return string(e)[:i]
+	}
+	return string(e)
 }
 
 // GetMessage returns the message of this exception.
 func (e String) GetMessage() string {
-	_, m, _ := strings.Cut(string(e), separator)
-	return m
+	if i := strings.Index(string(e), separator); i >= 0 {
+		return string(e)[i+len(separator):]
+	}
+	return ""
 }
 
 // SetMessage stores a message inside this exception.
@@ -68,14 +72,17 @@ func (e String) GetMessage() string {
 // Note: This method may modify the current exception or return a new one. Always
 // use the returned [Exception].
 func (e String) SetMessage(message string, parameters ...any) Exception {
-	switch {
-	case message == "":
-		return e
-	case len(parameters) == 0:
-		return String(e.GetType() + separator + message)
-	default:
-		return String(e.GetType() + separator + fmt.Sprintf(message, parameters...))
+	eType := e.GetType()
+	if message == "" {
+		return String(eType)
 	}
+	if len(parameters) > 0 {
+		message = fmt.Sprintf(message, parameters...)
+	}
+	if message == "" {
+		return String(eType)
+	}
+	return String(eType + separator + message)
 }
 
 // GetCause returns the list of underlying causes associated with this exception.
@@ -94,12 +101,9 @@ func (e String) AddCause(errors ...error) Exception {
 	var cause multipleErrors
 	cause.append(errors...)
 	if len(cause) > 0 {
-		t, m, _ := strings.Cut(string(e), separator)
-		return fullException{
-			Type:    t,
-			Message: m,
-			Cause:   cause,
-		}
+		f := toFullException(e)
+		f.Cause = cause
+		return f
 	}
 	return e
 }
@@ -119,12 +123,9 @@ func (e String) AddSuppressed(errors ...error) Exception {
 	var suppressed multipleErrors
 	suppressed.append(errors...)
 	if len(suppressed) > 0 {
-		t, m, _ := strings.Cut(string(e), separator)
-		return fullException{
-			Type:       t,
-			Message:    m,
-			Suppressed: suppressed,
-		}
+		f := toFullException(e)
+		f.Suppressed = suppressed
+		return f
 	}
 	return e
 }
@@ -143,12 +144,9 @@ func (e String) SetRecovered(recovered any) Exception {
 	if recovered == nil {
 		return e
 	}
-	t, m, _ := strings.Cut(string(e), separator)
-	return fullException{
-		Type:      t,
-		Message:   m,
-		Recovered: recovered,
-	}
+	f := toFullException(e)
+	f.Recovered = recovered
+	return f
 }
 
 // GetStackTrace returns the stack trace captured for this exception, represented
@@ -167,12 +165,9 @@ func (e String) GetStackTrace() StackFrames {
 // Note: This method may modify the current exception or return a new one. Always
 // use the returned [Exception].
 func (e String) FillStackTrace(skip int) Exception {
-	t, m, _ := strings.Cut(string(e), separator)
-	return fullException{
-		Type:       t,
-		Message:    m,
-		StackTrace: StackTrace(skip + 1),
-	}
+	f := toFullException(e)
+	f.StackTrace = StackTrace(skip + 1)
+	return f
 }
 
 // GetExtras returns the additional metadata associated with this exception as a
@@ -200,12 +195,9 @@ func (e String) SetExtras(extras map[string]any) Exception {
 	if extras == nil {
 		return e
 	}
-	t, m, _ := strings.Cut(string(e), separator)
-	return fullException{
-		Type:    t,
-		Message: m,
-		Extras:  extras,
-	}
+	f := toFullException(e)
+	f.Extras = extras
+	return f
 }
 
 // GetExtra retrieves a single extra value associated with the given key.
@@ -234,12 +226,9 @@ func (e String) SetExtra(key string, value any) Exception {
 	if value == nil {
 		return e
 	}
-	t, m, _ := strings.Cut(string(e), separator)
-	return fullException{
-		Type:    t,
-		Message: m,
-		Extras:  map[string]any{key: value},
-	}
+	f := toFullException(e)
+	f.Extras = map[string]any{key: value}
+	return f
 }
 
 // Clone returns an independent copy of this exception.
@@ -253,3 +242,11 @@ func (e String) Clone() Exception {
 }
 
 func (e String) __() {}
+
+func toFullException(s String) fullException {
+	t, m, _ := strings.Cut(string(s), separator)
+	return fullException{
+		Type:    t,
+		Message: m,
+	}
+}
