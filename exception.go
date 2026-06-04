@@ -9,6 +9,9 @@
 // It supports attaching underlying causes, recording suppressed errors, storing
 // recovered panic values, capturing stack traces, and attaching extras.
 //
+// Integration with zerolog is optional. It can be disabled with the `no_zerolog`
+// build tag.
+//
 // Methods that return [Exception] may either modify the current exception in
 // place or return a new exception instance. Callers should always use the
 // returned value and must not assume that the original exception remains
@@ -30,10 +33,6 @@ type Exception interface {
 	// Error returns a string representation of this exception in the form of "Type:
 	// Message"
 	Error() string
-
-	// MarshalJSON marshals this [Exception] as a JSON object, so that any logger
-	// that support JSON object dump could work seamlessly.
-	MarshalJSON() ([]byte, error)
 
 	// GetType returns the type of this exception.
 	GetType() string
