@@ -7,6 +7,7 @@
 package exception
 
 import (
+	"reflect"
 	"runtime"
 )
 
@@ -48,4 +49,23 @@ func StackTrace(skip int) StackFrames {
 		}
 	}
 	return stack
+}
+
+func Function(fn any) (frame StackFrame, ok bool) {
+	if fn == nil {
+		return
+	}
+	value := reflect.ValueOf(fn)
+	for value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
+		value = value.Elem()
+	}
+	if value.Kind() != reflect.Func {
+		return
+	}
+	info := runtime.FuncForPC(value.Pointer())
+	if info == nil {
+		return
+	}
+	file, line := info.FileLine(info.Entry())
+	return StackFrame{Function: info.Name(), File: file, Line: line}, true
 }

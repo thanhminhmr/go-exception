@@ -6,6 +6,8 @@
 
 package exception
 
+import "strings"
+
 // PanicError is the default type for exceptions created by [Panic] and
 // [Recover].
 const PanicError = String("panicked")
@@ -65,7 +67,7 @@ func Panic(recovered any) {
 //	if somethingWrong {
 //	    exception.Panic("bad state")
 //	}
-func Recover(callback func(Exception)) {
+func Recover(callback func(recovered Exception)) {
 	if callback == nil {
 		panic("BUG: callback is nil")
 	}
@@ -82,11 +84,16 @@ func Recover(callback func(Exception)) {
 	}
 	// skip to panic frame if exists
 	trace := StackTrace(1)
-	for i, frame := range trace {
-		if frame.Function == "runtime.gopanic" {
-			trace = trace[i+1:]
-			break
+	for len(trace) > 0 {
+		frame := &trace[0]
+		if function, found := strings.CutPrefix(frame.Function, "runtime."); found {
+			// this is a hack at best, but it works on Linux and Windows at least
+			if strings.Contains(function, "panic") {
+				trace = trace[1:]
+				continue
+			}
 		}
+		break
 	}
 	callback(fullException{
 		Type:       string(PanicError),
