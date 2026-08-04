@@ -38,13 +38,13 @@ func StackTrace(skip int) StackFrames {
 	// create stack frames
 	stack := make([]StackFrame, 0, programCountersLength)
 	for {
-		if frame, more := frames.Next(); more {
-			stack = append(stack, StackFrame{
-				Function: frame.Function,
-				File:     frame.File,
-				Line:     frame.Line,
-			})
-		} else {
+		frame, more := frames.Next()
+		stack = append(stack, StackFrame{
+			Function: frame.Function,
+			File:     frame.File,
+			Line:     frame.Line,
+		})
+		if !more {
 			break
 		}
 	}
@@ -56,7 +56,7 @@ func Function(fn any) (frame StackFrame, ok bool) {
 		return
 	}
 	value := reflect.ValueOf(fn)
-	for value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
+	for value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 		value = value.Elem()
 	}
 	if value.Kind() != reflect.Func {

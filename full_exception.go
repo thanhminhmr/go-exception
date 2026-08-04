@@ -104,6 +104,9 @@ func (e fullException) GetExtra(key string) (any, bool) {
 
 func (e fullException) SetExtra(key string, value any) Exception {
 	if value != nil {
+		if e.Extras == nil {
+			e.Extras = make(map[string]any)
+		}
 		e.Extras[key] = value
 	} else {
 		delete(e.Extras, key)

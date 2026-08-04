@@ -8,74 +8,137 @@ package exception_test
 
 import (
 	"io"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/thanhminhmr/go-exception"
 )
 
-func TestStackTrace(t *testing.T) {
-	trace := exception.StackTrace(0)
-	if len(trace) == 0 {
-		t.Fatalf("expected non-empty stack trace")
-	}
-	for _, frame := range trace {
-		if frame.Function == "" || frame.File == "" || frame.Line == 0 {
-			t.Fatalf("expected function, file, and line populated, got %#v", frame)
+func referenceStackTrace(skip int) exception.StackFrames {
+	const depth = 64
+	var pcs [depth]uintptr
+	n := runtime.Callers(2+skip, pcs[:])
+	frames := runtime.CallersFrames(pcs[:n])
+	stack := make([]exception.StackFrame, 0, n)
+	for {
+		frame, more := frames.Next()
+		stack = append(stack, exception.StackFrame{
+			Function: frame.Function,
+			File:     frame.File,
+			Line:     frame.Line,
+		})
+		if !more {
+			break
 		}
 	}
-	if !strings.HasSuffix(trace[0].Function, "/go-exception_test.TestStackTrace") {
-		t.Fatalf("expected first function is this function, got %#v", trace[0])
-	}
+	return stack
 }
 
-func TestStackTracePanic(t *testing.T) {
+func TestStackTrace_CapturesCallerFrame(t *testing.T) {
+	trace := exception.StackTrace(0)
+	requireFirstFrameSuffix(t, trace, "/go-exception_test.TestStackTrace_CapturesCallerFrame")
+}
+
+func TestStackTrace_FromPanic(t *testing.T) {
 	defer exception.Recover(func(recovered exception.Exception) {
-		trace := recovered.GetStackTrace()
-		if len(trace) == 0 {
-			t.Fatalf("expected non-empty stack trace")
-		}
-		for _, frame := range trace {
-			if frame.Function == "" || frame.File == "" || frame.Line == 0 {
-				t.Fatalf("expected function, file, and line populated, got %#v", frame)
-			}
-		}
-		if !strings.HasSuffix(trace[0].Function, "/go-exception_test.TestStackTracePanic") {
-			t.Fatalf("expected first function is this function, got %#v", trace[0])
-		}
+		requireFirstFrameSuffix(t, recovered.GetStackTrace(),
+			"/go-exception_test.TestStackTrace_FromPanic")
 	})
 	panic("DIE")
 }
 
 var globalInterface io.Closer
 
-func TestStackTraceDereference(t *testing.T) {
+func TestStackTrace_FromNilPointerDereference(t *testing.T) {
 	defer exception.Recover(func(recovered exception.Exception) {
-		trace := recovered.GetStackTrace()
-		if len(trace) == 0 {
-			t.Fatalf("expected non-empty stack trace")
-		}
-		for _, frame := range trace {
-			if frame.Function == "" || frame.File == "" || frame.Line == 0 {
-				t.Fatalf("expected function, file, and line populated, got %#v", frame)
-			}
-		}
-		if !strings.HasSuffix(trace[0].Function, "/go-exception_test.TestStackTraceDereference") {
-			t.Fatalf("expected first function is this function, got %#v", trace[0])
-		}
+		requireFirstFrameSuffix(t, recovered.GetStackTrace(),
+			"/go-exception_test.TestStackTrace_FromNilPointerDereference")
 	})
 	_ = globalInterface.Close()
 }
 
+func TestStackTrace_PreservesAllFrames(t *testing.T) {
+	actual := exception.StackTrace(0)
+	expected := referenceStackTrace(0)
+
+	if len(actual) != len(expected) {
+		t.Errorf("StackTrace returned %d frames, expected %d", len(actual), len(expected))
+		return
+	}
+	if len(expected) > 0 {
+		lastExpected := expected[len(expected)-1]
+		lastActual := actual[len(actual)-1]
+		if lastActual.Function != lastExpected.Function {
+			t.Errorf("last frame function: got %q, want %q",
+				lastActual.Function, lastExpected.Function)
+		}
+	}
+}
+
+func TestStackTrace_SkipPreservesAllFrames(t *testing.T) {
+	actual := exception.StackTrace(1)
+	expected := referenceStackTrace(1)
+
+	if len(actual) != len(expected) {
+		t.Errorf("StackTrace(1) returned %d frames, expected %d", len(actual), len(expected))
+	}
+}
+
+func sampleFunc() {}
+
 func TestFunction(t *testing.T) {
-	if frame, ok := exception.Function(nil); ok {
-		t.Errorf("Expected to be not ok, got a frame %#v", frame)
-	}
-	if frame, ok := exception.Function("hello world"); ok {
-		t.Errorf("Expected to be not ok, got a frame %#v", frame)
-	}
-	if frame, ok := exception.Function(TestFunction); !ok ||
-		!strings.HasSuffix(frame.Function, "/go-exception_test.TestFunction") {
-		t.Errorf("Expected to be this function, got %#v", frame)
-	}
+	t.Run("direct function", func(t *testing.T) {
+		frame, ok := exception.Function(sampleFunc)
+		if !ok {
+			t.Fatal("expected ok=true for direct function")
+		}
+		if !strings.HasSuffix(frame.Function, ".sampleFunc") {
+			t.Errorf("function: got %q, want suffix .sampleFunc", frame.Function)
+		}
+		if frame.File == "" || frame.Line == 0 {
+			t.Errorf("expected file and line, got %#v", frame)
+		}
+	})
+
+	t.Run("interface-wrapped function", func(t *testing.T) {
+		var fn any = sampleFunc
+		frame, ok := exception.Function(fn)
+		if !ok {
+			t.Fatal("expected ok=true for interface-wrapped function")
+		}
+		if !strings.HasSuffix(frame.Function, ".sampleFunc") {
+			t.Errorf("function: got %q, want suffix .sampleFunc", frame.Function)
+		}
+	})
+
+	t.Run("pointer to function", func(t *testing.T) {
+		f := sampleFunc
+		frame, ok := exception.Function(&f)
+		if !ok {
+			t.Fatal("expected ok=true for pointer to function")
+		}
+		if !strings.HasSuffix(frame.Function, ".sampleFunc") {
+			t.Errorf("function: got %q, want suffix .sampleFunc", frame.Function)
+		}
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		if _, ok := exception.Function(nil); ok {
+			t.Error("expected ok=false for nil")
+		}
+	})
+
+	t.Run("non-function", func(t *testing.T) {
+		if _, ok := exception.Function("hello world"); ok {
+			t.Error("expected ok=false for string")
+		}
+	})
+
+	t.Run("typed nil pointer", func(t *testing.T) {
+		var f *func()
+		if _, ok := exception.Function(f); ok {
+			t.Error("expected ok=false for typed nil pointer")
+		}
+	})
 }
